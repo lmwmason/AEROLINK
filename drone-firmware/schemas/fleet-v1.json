@@ -1,0 +1,11 @@
+{
+  "name": "AEROLINK-FLEET",
+  "version": 1,
+  "encoding": "canonical-json-utf8",
+  "authentication": "HMAC-SHA256",
+  "max_canonical_bytes": 4096,
+  "vehicle_id": {"minimum": 1, "maximum": 15},
+  "ttl_ms": {"minimum": 1, "maximum": 1000},
+  "allowed_kinds": ["ABORT", "ASSIGN", "PING", "SETPOINT", "TRANSITION"],
+  "forbidden_kinds": ["ARM", "MOTOR", "PAYLOAD_ACTIVATE", "THROTTLE"]
+}

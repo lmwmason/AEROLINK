@@ -1,0 +1,22 @@
+{
+  "name": "AEROLINK-UART",
+  "version": 1,
+  "byte_order": "little",
+  "magic_hex": "414c",
+  "max_payload": 512,
+  "max_frame": 533,
+  "crc": "CRC-32/ISO-HDLC",
+  "vehicle_id": {"minimum": 1, "maximum": 15},
+  "message_types": {
+    "HELLO": 1, "CAPABILITIES": 2, "HEARTBEAT": 3,
+    "SET_MODE": 16, "SET_STABILIZED_SETPOINT": 17,
+    "SET_PAYLOAD_STATE": 18, "NODE_STATUS": 32, "HEALTH": 33,
+    "ACK": 34, "FAULT": 35
+  },
+  "actuator_commands": [],
+  "setpoint_bounds": {
+    "roll_cd": [-3000, 3000], "pitch_cd": [-3000, 3000],
+    "yaw_rate_cds": [-18000, 18000], "vertical_rate_cms": [-300, 300],
+    "ttl_ms": [1, 100]
+  }
+}

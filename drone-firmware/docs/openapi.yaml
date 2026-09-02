@@ -1,0 +1,179 @@
+openapi: 3.0.3
+info:
+  title: AEROLINK simulation server API
+  version: "1.0"
+  description: >
+    Loopback-only, non-actuating fleet simulation API. Every response
+    describes software SITL/Fake-FC state; no endpoint arms, flies, or
+    activates payload hardware. Node endpoints (register/telemetry) use
+    per-node HMAC request signing (see docs/threat-model.md); operator
+    endpoints use a bearer session token with role-scoped permissions
+    (viewer: read; operator: read, authorize, abort; admin: adds
+    maintenance and key rotation).
+servers:
+  - url: http://127.0.0.1:{port}
+    variables:
+      port:
+        default: "8080"
+security:
+  - operatorSession: []
+paths:
+  /api/register:
+    post:
+      summary: Register or update a simulated node's link state
+      security: [{ nodeSignature: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NodeUpdate" }
+      responses:
+        "200": { description: accepted }
+        "400": { description: rejected (bad signature, replay, or malformed body) }
+  /api/telemetry:
+    post:
+      summary: Update a simulated node's health/session/fault state
+      security: [{ nodeSignature: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NodeUpdate" }
+      responses:
+        "200": { description: accepted }
+        "400": { description: rejected }
+  /api/fleet:
+    get:
+      summary: Full fleet + mission dashboard snapshot
+      responses:
+        "200": { description: OK }
+        "403": { description: missing/expired/insufficient operator session }
+  /api/vehicles/{id}:
+    get:
+      summary: Single-node detail with its audit event history
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, minimum: 1, maximum: 15 } }
+      responses:
+        "200": { description: OK }
+        "404": { description: unknown vehicle }
+  /api/vehicles/{id}/maintenance:
+    post:
+      summary: Set or clear maintenance status (requires the admin role)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, minimum: 1, maximum: 15 } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                operator: { type: string }
+                action: { type: string, enum: [set, clear], default: set }
+                note: { type: string }
+      responses:
+        "200": { description: OK }
+        "403": { description: forbidden }
+        "400": { description: vehicle is assigned to an active mission }
+  /api/missions:
+    get:
+      summary: Mission history
+      responses:
+        "200": { description: OK }
+    post:
+      summary: Deterministically allocate and create a mission (requires operator/admin)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [count]
+              properties: { count: { type: integer, minimum: 1, maximum: 15 } }
+      responses:
+        "200": { description: created, state PLANNED }
+        "400": { description: insufficient healthy vehicles, invalid route, or corridor/stairwell conflict }
+        "403": { description: forbidden }
+  /api/missions/{id}/authorize:
+    post:
+      summary: Operator authorization (PLANNED -> AUTHORIZED)
+      responses: { "200": { description: OK }, "403": { description: forbidden } }
+  /api/missions/{id}/abort-request:
+    post:
+      summary: Operator abort request (PLANNED|AUTHORIZED -> ABORT_REQUESTED)
+      responses: { "200": { description: OK }, "403": { description: forbidden } }
+  /api/missions/{id}/abort-confirm:
+    post:
+      summary: Confirm abort, release vehicles and reservations (ABORT_REQUESTED -> ABORTED)
+      responses: { "200": { description: OK }, "403": { description: forbidden } }
+  /api/missions/{id}/complete:
+    post:
+      summary: Mark a mission complete, release vehicles and reservations (AUTHORIZED -> COMPLETED)
+      responses: { "200": { description: OK }, "403": { description: forbidden } }
+  /api/ai/fleet-size:
+    post:
+      summary: Advisory fleet-size recommendation (never allocates or creates a mission)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: { estimated_kg: { type: number } }
+      responses: { "200": { description: "{valid, model, version, confidence, output}; output is null when the proposal failed validation" } }
+  /api/ai/anomaly-summary:
+    post:
+      summary: Advisory anomaly summary over current node faults (read-only)
+      responses: { "200": { description: OK } }
+  /api/missions/{id}/ai-summary:
+    post:
+      summary: Advisory operator-facing mission summary (read-only)
+      responses: { "200": { description: OK } }
+  /api/metrics:
+    get:
+      summary: Audit-derived counters and latency/packet-age histograms
+      description: >
+        Recomputed from the audit log on every request, so it can never
+        diverge from /api/audit/export. Includes audit-entry counts by
+        kind, AI validation outcomes, mission transition counts, server
+        restart-reconciliation and maintenance-event counts, and
+        packet-latency/packet-age histograms (count/min/max/mean/p50/p95/p99).
+      responses: { "200": { description: OK } }
+  /api/health-timeline:
+    get:
+      summary: Unhealthy telemetry/sim_node events in arrival order
+      responses: { "200": { description: OK } }
+  /api/audit/export:
+    get:
+      summary: Full hash-chained audit log plus a chain-validity flag
+      responses: { "200": { description: OK } }
+  /api/stream:
+    get:
+      summary: Authenticated Server-Sent Events fleet-dashboard stream
+      description: >
+        Bearer token may be supplied as ?token=... because EventSource
+        cannot set an Authorization header. Emits one `data:` JSON
+        dashboard snapshot roughly every 200ms for a bounded number of
+        events, then closes; reconnect to continue watching.
+      responses:
+        "200":
+          description: text/event-stream of dashboard snapshots
+components:
+  securitySchemes:
+    operatorSession:
+      type: http
+      scheme: bearer
+      description: Also accepted as an aerolink_session cookie or a ?token= query parameter (for /api/stream).
+    nodeSignature:
+      type: apiKey
+      in: header
+      name: X-AEROLINK-Signature
+      description: HMAC-SHA256 over method/path/timestamp/nonce/body-hash; see X-AEROLINK-Node/Time/Nonce headers and docs/threat-model.md.
+  schemas:
+    NodeUpdate:
+      type: object
+      required: [vehicle_id, session, health]
+      properties:
+        vehicle_id: { type: integer, minimum: 1, maximum: 15 }
+        session: { type: integer }
+        health: { type: string, enum: [online, offline] }
+        packet_age_ms: { type: number }
+        latency_ms: { type: number }
+        faults: { type: array, items: { type: string } }

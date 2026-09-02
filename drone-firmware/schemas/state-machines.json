@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "machines": {
+    "fc": {
+      "initial": "DISABLED",
+      "states": ["DISABLED", "STANDBY", "READY", "ACTIVE", "DEGRADED", "ABORTING", "FAULT"],
+      "transitions": {
+        "DISABLED": ["STANDBY"], "STANDBY": ["READY", "DISABLED", "ABORTING", "FAULT"],
+        "READY": ["STANDBY", "ACTIVE", "DISABLED", "ABORTING", "FAULT"],
+        "ACTIVE": ["READY", "DEGRADED", "DISABLED", "ABORTING", "FAULT"],
+        "DEGRADED": ["READY", "ABORTING", "DISABLED", "FAULT"],
+        "ABORTING": ["STANDBY", "DISABLED", "FAULT"], "FAULT": ["DISABLED"]
+      },
+      "direct_forbidden": [["DISABLED", "ACTIVE"], ["FAULT", "ACTIVE"]]
+    },
+    "pi_mission": {
+      "initial": "IDLE",
+      "states": ["IDLE", "AUTHORIZED", "LAUNCH", "FORM", "TRANSIT_TO_LOCKER", "PICKUP", "TRANSIT_TO_DESTINATION", "DELIVER", "RETURN", "LAND", "ABORT", "FAULT"],
+      "transitions": {
+        "IDLE": ["AUTHORIZED"], "AUTHORIZED": ["LAUNCH", "ABORT"], "LAUNCH": ["FORM", "ABORT"],
+        "FORM": ["TRANSIT_TO_LOCKER", "ABORT"], "TRANSIT_TO_LOCKER": ["PICKUP", "ABORT"],
+        "PICKUP": ["TRANSIT_TO_DESTINATION", "ABORT"], "TRANSIT_TO_DESTINATION": ["DELIVER", "ABORT"],
+        "DELIVER": ["RETURN", "ABORT"], "RETURN": ["LAND", "ABORT"], "LAND": ["IDLE"],
+        "ABORT": ["LAND", "FAULT"], "FAULT": ["IDLE"]
+      }
+    },
+    "server_mission": {
+      "initial": "PLANNED", "states": ["PLANNED", "AUTHORIZED", "ABORT_REQUESTED", "ABORTED", "COMPLETED"],
+      "transitions": {"PLANNED": ["AUTHORIZED", "ABORT_REQUESTED"], "AUTHORIZED": ["ABORT_REQUESTED", "COMPLETED"], "ABORT_REQUESTED": ["ABORTED"], "ABORTED": [], "COMPLETED": []}
+    },
+    "fleet_node": {
+      "initial": "offline", "states": ["offline", "online", "degraded", "maintenance", "available", "assigned"],
+      "transitions": {"offline": ["online", "maintenance"], "online": ["available", "degraded", "offline", "maintenance"], "available": ["assigned", "degraded", "offline", "maintenance"], "assigned": ["available", "degraded", "offline"], "degraded": ["available", "offline", "maintenance"], "maintenance": ["offline"]}
+    },
+    "server_reconciliation": {
+      "initial": "STOPPED", "states": ["STOPPED", "RECOVERING", "RECONCILING", "READY"],
+      "transitions": {"STOPPED": ["RECOVERING"], "RECOVERING": ["RECONCILING"], "RECONCILING": ["READY", "STOPPED"], "READY": ["STOPPED"]}
+    }
+  }
+}

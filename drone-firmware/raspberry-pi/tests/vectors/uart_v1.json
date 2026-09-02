@@ -1,0 +1,56 @@
+{
+  "protocol": "AEROLINK-UART",
+  "version": 1,
+  "byte_order": "little-endian",
+  "crc": "CRC-32/ISO-HDLC as implemented by zlib.crc32",
+  "valid": [
+    {
+      "name": "hello_pi_vehicle_1",
+      "message_type": "HELLO",
+      "vehicle_id": 1,
+      "sequence": 16909060,
+      "hex": "414c01010b000100000403020140e201000101018877665544332211134541f3"
+    },
+    {
+      "name": "heartbeat_vehicle_15",
+      "message_type": "HEARTBEAT",
+      "vehicle_id": 15,
+      "sequence": 42,
+      "hex": "414c01030b000f09002a00000006120f000807060504030201022c01ce38bc94"
+    },
+    {
+      "name": "neutral_setpoint_vehicle_3",
+      "message_type": "SET_STABILIZED_SETPOINT",
+      "vehicle_id": 3,
+      "sequence": 99,
+      "hex": "414c01111200030c006300000088130000112233445566778800000000000000006400d5f21613"
+    }
+  ],
+  "invalid": [
+    {
+      "name": "bad_magic",
+      "reject": "BAD_MAGIC",
+      "hex": "004c01010b000100000403020140e201000101018877665544332211134541f3"
+    },
+    {
+      "name": "unsupported_version_with_valid_crc",
+      "reject": "UNSUPPORTED_VERSION",
+      "hex": "414c02010b000100000403020140e201000101018877665544332211eba81601"
+    },
+    {
+      "name": "unsupported_type_with_valid_crc",
+      "reject": "UNSUPPORTED_TYPE",
+      "hex": "414c017f0b000100000403020140e201000101018877665544332211494885e7"
+    },
+    {
+      "name": "bad_crc",
+      "reject": "BAD_CRC",
+      "hex": "414c01010b000100000403020140e201000101018877665544332211134541f2"
+    },
+    {
+      "name": "truncated",
+      "reject": "BAD_LENGTH",
+      "hex": "414c01010b000100000403020140e201000101018877665544332211134541"
+    }
+  ]
+}
