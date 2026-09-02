@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+build/
+dist/
+
+# Betaflight build products and downloaded toolchains
+flight-controller/obj/
+flight-controller/build/
+flight-controller/downloads/
+
+# Simulation output is reproducible and must not become source state.
+artifacts/
+*.log
+
+# Generated SBOM/dependency evidence is reproducible and must not become source state.
+evidence/
+
+# Test-only local credentials from scripts/generate_dev_credentials.py. Never commit.
+dev-credentials/
+
+# embedded-emagcontrol/ (PlatformIO) has its own .gitignore for its .pio/ build cache.

@@ -23,6 +23,12 @@ companion input. AEROLINK FC functionality is disabled by default.
   `flight-controller/UPSTREAM.md`.
 - `raspberry-pi/`: per-vehicle Linux companion protocol and service code.
 - `server/`: central deterministic fleet manager and advisory-AI boundary.
+- `embedded-emagcontrol/`: a standalone Arduino Mega firmware for the
+  carried electromagnet's altitude-triggered release logic (PlatformIO; see
+  its own `embedded-emagcontrol/README.md`). It is not wired into AEROLINK's
+  UART protocol or `SET_PAYLOAD_STATE` — the electromagnet driver/release
+  policy integration remains one of the blocking hardware decisions listed
+  in `AGENT.md`.
 
 The simulation implementation includes the UART codec, a doubly gated SITL
 endpoint, vehicle/server state machines, an HTTP fleet dashboard, Fake FC

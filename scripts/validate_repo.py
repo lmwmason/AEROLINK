@@ -16,7 +16,7 @@ for path in list((ROOT/"docs").glob("*.md"))+[ROOT/"README.md"]:
         if clean and not (path.parent/clean).resolve().exists():errors.append(f"{path.relative_to(ROOT)}: broken link {target}")
 for path in ROOT.glob("**/*.json"):
     relative=path.relative_to(ROOT)
-    if relative.parts[0]=="flight-controller" or any(part in {"obj","artifacts",".git"} for part in relative.parts):continue
+    if relative.parts[0]=="flight-controller" or relative.parts[0]=="embedded-emagcontrol" or any(part in {"obj","artifacts",".git",".vscode",".pio"} for part in relative.parts):continue
     try:json.loads(path.read_text())
     except Exception as exc:errors.append(f"{path.relative_to(ROOT)}: invalid JSON: {exc}")
 for base in (ROOT/"raspberry-pi",ROOT/"server",ROOT/"scripts"):
